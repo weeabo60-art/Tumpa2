@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Watergun Tag</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --bg:#0b0f14; --bg2:#111a22; --panel:#141e27; --line:#2a3b49;
+  --txt:#ffffff; --dim:#9db2c2;
+  --go:#22d17c; --warn:#ffb020; --bad:#ff3b3b; --blue:#3aa0ff; --violet:#b47bff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;overflow:hidden;background:var(--bg);color:var(--txt)}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-weight:700;letter-spacing:.02em;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;
+}
+input,button{font-family:inherit;font-weight:800;letter-spacing:.03em}
+.hidden{display:none !important}
+.muted{color:var(--dim);font-weight:600}
+.sm{font-size:13px}
+/* ---------------- buttons ---------------- */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:54px;padding:0 18px;border-radius:14px;border:2px solid transparent;
+  background:#22313d;color:#fff;font-size:17px;line-height:1;cursor:pointer;
+  text-transform:uppercase;touch-action:manipulation;transition:filter .12s,transform .06s;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.35}
+.btn.big{min-height:62px;font-size:19px}
+.btn.sm{min-height:42px;font-size:14px;padding:0 12px;border-radius:11px}
+.btn.go{background:var(--go);color:#04150c}
+.btn.blue{background:var(--blue);color:#04121f}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.warn{background:var(--warn);color:#1a1100}
+.btn.ghost{background:rgba(20,30,39,.92);border-color:var(--line);color:#fff}
+.btn.wide{width:100%}
+.btn.sel{outline:3px solid #fff;outline-offset:2px}
+/* ---------------- screens ---------------- */
+.screen{position:fixed;inset:0;z-index:900;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(20px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom))}
+.homeInner{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{margin:6px 0 0;font-size:34px;letter-spacing:.06em;line-height:1}
+.lede{margin:0 0 8px;color:var(--dim);font-weight:600;font-size:15px;line-height:1.35}
+.lbl{font-size:12px;letter-spacing:.16em;color:var(--dim);font-weight:800}
+input{
+  width:100%;min-height:60px;border-radius:14px;border:2px solid var(--line);
+  background:#0f1720;color:#fff;font-size:22px;padding:0 16px;text-transform:uppercase;
+}
+input::placeholder{color:#516b7d;text-transform:none;font-weight:700}
+input:focus{outline:none;border-color:var(--blue)}
+#inCode{font-size:30px;text-align:center;letter-spacing:.3em;text-indent:.3em}
+.joinRow{display:grid;grid-template-columns:1fr 130px;gap:12px}
+.twoCol{display:grid;grid-template-columns:1fr;gap:12px}
+.orLine{display:flex;align-items:center;gap:12px;margin:6px 0;color:var(--dim);font-size:12px;letter-spacing:.16em}
+.orLine:before,.orLine:after{content:"";height:2px;flex:1;background:var(--line)}
+.err{color:#ff8080;font-size:14px;min-height:20px;font-weight:700}
+.fine{color:#6d8798;font-size:11.5px;line-height:1.5;font-weight:600;letter-spacing:.06em;margin-top:10px}
+/* ---------------- map ---------------- */
+#mapwrap{position:fixed;inset:0;z-index:10}
+#map{position:absolute;inset:0;background:#0e151c}
+.leaflet-container{background:#0e151c;font-family:inherit}
+.mapTop{position:absolute;top:0;left:0;right:0;z-index:500;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(6,10,14,.95) 0%,rgba(6,10,14,.82) 55%,rgba(6,10,14,0) 100%)}
+.bar{display:flex;gap:8px;justify-content:space-between;align-items:center}
+.chip{
+  background:rgba(20,30,39,.94);border:2px solid var(--line);border-radius:11px;
+  padding:7px 11px;font-size:12.5px;letter-spacing:.1em;color:#dbe7ef;white-space:nowrap
+}
+.chip b{color:#fff;letter-spacing:.24em;font-size:17px}
+.chip.ok{border-color:var(--go);color:#c8ffe4}
+.chip.warnc{border-color:var(--warn);color:#ffe4b0}
+.chip.badc{border-color:var(--bad);color:#ffc9c9}
+.clockBar{margin-top:9px;text-align:center}
+.clockMain{font-size:42px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.07em;
+  text-shadow:0 2px 14px rgba(0,0,0,.9)}
+.clockSub{margin-top:5px;font-size:12px;letter-spacing:.16em;color:#c3d5e2;text-shadow:0 2px 10px #000}
+.clockMain.bad{color:#ff6b6b}
+.clockMain.go{color:#4dfaa3}
+.clockMain.warn{color:var(--warn)}
+.chipWrap{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+body.drawmode .mapBottom,body.drawmode .locBtn,body.drawmode .leaflet-bottom{display:none !important}
+body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
+.locBtn{position:absolute;right:12px;bottom:calc(196px + env(safe-area-inset-bottom));z-index:500;
+  min-width:64px;height:48px;border-radius:12px;border:2px solid var(--line);background:rgba(20,30,39,.96);
+  color:#fff;font-size:13px;letter-spacing:.14em;font-weight:800;pointer-events:auto}
+.mapBottom{position:absolute;left:0;right:0;bottom:0;z-index:500;display:flex;gap:10px;
+  padding:12px 12px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(0deg,rgba(6,10,14,.95) 0%,rgba(6,10,14,0) 100%);pointer-events:none}
+.mapBottom .btn{pointer-events:auto;flex:1}
+.mapBottom .btn.ghost{flex:0 0 118px}
+.leaflet-bottom{bottom:calc(86px + env(safe-area-inset-bottom)) !important}
+.drawBar{position:absolute;left:12px;right:12px;bottom:calc(152px + env(safe-area-inset-bottom));z-index:600;
+  background:rgba(20,30,39,.97);border:2px solid var(--blue);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.drawHint{font-size:12px;letter-spacing:.12em;color:#cfe4f5;text-align:center;line-height:1.4}
+.drawBtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* ---------------- panel ---------------- */
+#panel{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.55);display:none}
+#panel.open{display:block}
+.sheet{position:absolute;left:0;right:0;bottom:0;max-height:82vh;background:var(--panel);
+  border-radius:20px 20px 0 0;border-top:2px solid var(--line);display:flex;flex-direction:column;
+  animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(18px);opacity:.6}to{transform:none;opacity:1}}
+.sheetHead{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:2px solid var(--line)}
+.sheetTitle{font-size:14px;letter-spacing:.18em;color:var(--dim)}
+.sheetBody{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:16px}
+.blk{background:#0f1720;border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.blkTitle{font-size:12px;letter-spacing:.18em;color:var(--dim)}
+.codeBig{font-size:40px;letter-spacing:.24em;text-align:center;color:#fff;font-variant-numeric:tabular-nums}
+.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--dim)}
+.kv b{color:#fff;font-size:14px;letter-spacing:.04em;text-align:right}
+.rowline{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:18px}
+.badge{font-size:11px;letter-spacing:.14em;padding:5px 9px;border-radius:8px;background:#2a3b49;color:#fff}
+.badge.hunter{background:var(--bad)}
+.badge.runner{background:var(--go);color:#04150c}
+.badge.out{background:#3a2a2a;color:#ff9a9a}
+.badge.host{background:var(--violet);color:#1a0630}
+/* roster */
+.pRow{display:flex;flex-direction:column;gap:8px;padding:11px;border-radius:13px;background:#16222c;border:2px solid transparent}
+.pRow.me{border-color:#3c556a}
+.pRow.dead{opacity:.5}
+.pRowTop{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.pName{font-size:16px;letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pMeta{font-size:11.5px;letter-spacing:.08em;color:var(--dim);font-weight:700}
+.pActs{display:flex;gap:8px;flex-wrap:wrap}
+.pActs .btn{min-height:40px;font-size:13px;flex:1;padding:0 10px}
+/* rules grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.stepper{display:flex;gap:8px}
+.stepper .btn{flex:1;min-height:44px;font-size:13px}
+.bigVal{font-size:24px;text-align:center;font-variant-numeric:tabular-nums;color:#fff}
+/* log */
+.logRow{font-size:12.5px;color:#c8d8e4;line-height:1.45;font-weight:700;display:flex;gap:8px}
+.logRow span:first-child{color:#6d8798;flex:0 0 46px;font-variant-numeric:tabular-nums}
+/* ---------------- oob overlay ---------------- */
+#oob{position:fixed;inset:0;z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:24px;text-align:center;background:rgba(150,0,0,.92)}
+#oob.on{display:flex}
+#oob h2{margin:0;font-size:30px;letter-spacing:.1em}
+#oob .big{font-size:74px;line-height:1;letter-spacing:.06em;font-variant-numeric:tabular-nums;background:none}
+#oob .sub{font-size:15px;letter-spacing:.08em;line-height:1.5;color:#ffdede}
+#oob.elim{background:rgba(60,0,0,.96)}
+/* toast */
+#toast{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top));transform:translate(-50%,-140%);
+  z-index:1100;background:#0f1720;border:2px solid var(--blue);border-radius:13px;padding:12px 18px;
+  font-size:14px;letter-spacing:.06em;max-width:88vw;text-align:center;transition:transform .2s}
+#toast.on{transform:translate(-50%,0)}
+#toast.bad{border-color:var(--bad)}
+#toast.good{border-color:var(--go)}
+/* leaflet pin */
+.pin{display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;letter-spacing:.02em;
+  color:#04150c;font-weight:900;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.6)}
+.pin.runner{background:var(--go)}
+.pin.hunter{background:var(--bad);color:#fff}
+.pin.out{background:#4a5b68;color:#c9d8e2;border-color:#22313d}
+.pin.me{background:var(--blue);color:#04121f}
+.meDot{width:22px;height:22px;border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 0 0 8px rgba(58,160,255,.22),0 2px 8px rgba(0,0,0,.6)}
+.leaflet-control-attribution{font-size:9px !important;background:rgba(0,0,0,.5) !important;color:#8fa5b5 !important}
+.leaflet-control-attribution a{color:#a8c0d0 !important}
+.leaflet-bar a{background:#16222c !important;color:#fff !important;border-color:#2a3b49 !important}
+</style>
+</head>
+<body>
+
+<!-- ======================= HOME ======================= -->
+<div id="home" class="screen">
+  <div class="homeInner">
+    <h1>WATERGUN TAG</h1>
+    <p class="lede">Live GPS tag. Peer-to-peer. No accounts, no server, no database.</p>
+    <div>
+      <div class="lbl">YOUR NAME</div>
+      <input id="inName" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="Name">
+    </div>
+    <button class="btn go big wide" id="btnHost">CREATE ROOM</button>
+    <div class="orLine"><span>OR JOIN A ROOM</span></div>
+    <div class="joinRow">
+      <input id="inCode" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE">
+      <button class="btn blue big" id="btnJoin">JOIN</button>
+    </div>
+    <div class="err" id="homeErr"></div>
+    <div class="fine">
+      LOCATION ACCESS IS REQUIRED AND ONLY WORKS OVER HTTPS. ALLOW THE PROMPT, KEEP THE SCREEN ON, AND STAY ON THIS TAB.
+      iOS: ADD TO HOME SCREEN FOR BEST RESULTS.
+    </div>
+  </div>
+</div>
+
+<!-- ======================= MAP ======================= -->
+<div id="mapwrap" class="hidden">
+  <div id="map"></div>
+
+  <div class="mapTop">
+    <div class="bar">
+      <div class="chip" id="chipRoom">ROOM <b>----</b></div>
+      <div class="chip" id="chipNet">STARTING</div>
+    </div>
+    <div class="clockBar">
+      <div class="clockMain" id="clockMain">--:--</div>
+      <div class="clockSub" id="clockSub">WAITING FOR HOST</div>
+    </div>
+    <div class="chipWrap" id="chipWrap"></div>
+  </div>
+
+  <div class="drawBar hidden" id="drawBar">
+    <div class="drawHint" id="drawHint">TAP THE MAP TO ADD ZONE CORNERS</div>
+    <div class="drawBtns">
+      <button class="btn sm ghost" id="btnUndoPt">UNDO</button>
+      <button class="btn sm ghost" id="btnClearZone">CLEAR</button>
+      <button class="btn sm go" id="btnDoneDraw">DONE</button>
+    </div>
+  </div>
+
+  <button class="locBtn" id="btnMe">ME</button>
+
+  <div class="mapBottom">
+    <button class="btn ghost" id="btnMenu">MENU</button>
+    <button class="btn danger hidden" id="btnTag">I AM TAGGED</button>
+  </div>
+</div>
+
+<!-- ======================= PANEL ======================= -->
+<div id="panel">
+  <div class="sheet">
+    <div class="sheetHead">
+      <div class="sheetTitle">ROOM CONTROL</div>
+      <button class="btn sm ghost" id="panelClose">CLOSE</button>
+    </div>
+    <div class="sheetBody">
+
+      <div class="blk" id="blkRoom">
+        <div class="lbl">ROOM CODE</div>
+        <div class="codeBig" id="panelCode">----</div>
+        <div class="kv"><span>SHARE THIS CODE</span><b id="panelPlayerCount">0 PLAYERS</b></div>
+        <div class="grid2">
+          <button class="btn sm ghost" id="btnCopyCode">COPY CODE</button>
+          <button class="btn sm ghost" id="btnCopyLink">COPY LINK</button>
+        </div>
+      </div>
+
+      <div class="blk" id="blkMe">
+        <div class="lbl">YOU</div>
+        <div class="rowline"><span id="meName">-</span><span class="badge" id="meRole">-</span></div>
+        <div class="kv"><span>STATUS</span><b id="meStatus">-</b></div>
+        <div class="kv"><span>GPS SIGNAL</span><b id="meGps">NO FIX</b></div>
+        <div class="kv"><span>ACCURACY</span><b id="meAcc">-</b></div>
+        <div class="kv"><span>ZONE</span><b id="meZone">-</b></div>
+      </div>
+
+      <div class="blk hidden" id="blkHostSetup">
+        <div class="blkTitle">RULES</div>
+
+        <div class="kv"><span>HEAD START</span><b id="valHead">2:00</b></div>
+        <div class="stepper">
+          <button class="btn sm ghost" data-head="30">0:30</button>
+          <button class="btn sm ghost" data-head="60">1:00</button>
+          <button class="btn sm ghost" data-head="120">2:00</button>
+          <button class="btn sm ghost" data-head="300">5:00</button>
+          <button class="btn sm ghost" data-head="600">10:00</button>
+        </div>
+
+        <div class="kv"><span>PING INTERVAL</span><b id="valPing">1:00</b></div>
+        <div class="stepper">
+          <button class="btn sm ghost" data-ping="30">0:30</button>
+          <button class="btn sm ghost" data-ping="60">1:00</button>
+          <button class="btn sm ghost" data-ping="120">2:00</button>
+          <button class="btn sm ghost" data-ping="300">5:00</button>
+        </div>
+
+        <div class="kv"><span>GAME LENGTH</span><b id="valLen">NO LIMIT</b></div>
+        <div class="stepper">
+          <button class="btn sm ghost" data-len="0">OFF</button>
+          <button class="btn sm ghost" data-len="15">15M</button>
+          <button class="btn sm ghost" data-len="30">30M</button>
+          <button class="btn sm ghost" data-len="60">60M</button>
+        </div>
+
+        <div class="kv"><span>OUT OF ZONE GRACE</span><b>20 SEC</b></div>
+
+        <div class="kv"><span>HUNTER VISIBLE TO RUNNERS</span><b id="valReveal">ON</b></div>
+        <div class="stepper">
+          <button class="btn sm ghost" data-reveal="1">ON</button>
+          <button class="btn sm ghost" data-reveal="0">OFF</button>
+        </div>
+
+        <div class="kv"><span>PLAY ZONE</span><b id="valZone">NONE</b></div>
+        <div class="grid2">
+          <button class="btn sm blue" id="btnDraw">DRAW ZONE</button>
+          <button class="btn sm ghost" id="btnClearZone2">CLEAR ZONE</button>
+        </div>
+        <div class="muted sm">Optional. Tap corners on the map in order. At least 3 points.</div>
+      </div>
+
+      <div class="blk" id="blkRoster">
+        <div class="blkTitle">PLAYERS</div>
+        <div id="rosterList" style="display:flex;flex-direction:column;gap:9px"></div>
+      </div>
+
+      <div class="blk hidden" id="blkHostLive">
+        <div class="blkTitle">HOST CONTROLS</div>
+        <button class="btn go wide" id="btnStart">START GAME</button>
+        <div class="grid2">
+          <button class="btn sm warn" id="btnAbort">ABORT TO LOBBY</button>
+          <button class="btn sm danger" id="btnEnd">END GAME</button>
+        </div>
+        <div class="kv"><span>REMAINING PLAYERS</span><b id="valAlive">-</b></div>
+      </div>
+
+      <div class="blk hidden" id="blkClientLive">
+        <div class="blkTitle">PLAYER ACTIONS</div>
+        <button class="btn danger wide" id="btnTag2">I AM TAGGED / OUT</button>
+        <button class="btn sm ghost wide" id="btnPingNow">SEND PING NOW</button>
+        <div class="muted sm" id="hintPing">Manual ping is rate limited to one every 20 seconds.</div>
+      </div>
+
+      <div class="blk" id="blkLog">
+        <div class="blkTitle">EVENT LOG</div>
+        <div id="logList" style="display:flex;flex-direction:column;gap:7px"></div>
+      </div>
+
+      <button class="btn ghost wide" id="btnLeave">LEAVE ROOM</button>
+    </div>
+  </div>
+</div>
+
+<div id="oob">
+  <h2 id="oobTitle">OUT OF ZONE</h2>
+  <div class="big" id="oobTimer">0:20</div>
+  <div class="sub" id="oobSub">RETURN INSIDE THE PLAY ZONE</div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script>
+/* ============================================================
+   WATERGUN TAG - single file, serverless, peer-to-peer
+   ============================================================ */
+(function(){
+'use strict';
+
+/* ---------------- helpers ---------------- */
+const $ = function(id){ return document.getElementById(id); };
+const nowMs = function(){ return Date.now() + S.clockOffset; };
+function setTxt(el, t){ if(el && el.textContent !== t) el.textContent = t; }
+function mmss(ms){
+  if(!isFinite(ms)) return '--:--';
+  ms = Math.max(0, ms);
+  const total = Math.round(ms/1000);
+  const m = Math.floor(total/60), s = total%60;
+  return (m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+function rnd(n){ let s=''; for(let i=0;i<n;i++) s+=Math.random().toString(36)[2]||'x'; return s; }
+function uid(){ return rnd(6)+Date.now().toString(36).slice(-4); }
+
+/* ---------------- constants ---------------- */
+const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const APP_PREFIX = 'wgt13-';
+const GRACE_MS = 20000;
+const TICK = 250;
+const POS_SEND_MS = 3000;
+const MANUAL_PING_COOLDOWN = 20000;
+
+/* ---------------- state ---------------- */
+const S = {
+  role:null,              // 'host' | 'client'
+  room:null,
+  name:'',
+  myTag:null,
+  myAlive:true,
+  peer:null,
+  conns:new Map(),        // clientTag -> DataConnection (host only)
+  hostConn:null,          // client only
+  clockOffset:0,
+  settings:{ head:120, ping:60, len:0, reveal:1, zone:null },
+  players:new Map(),      // tag -> player
+  phase:'lobby',
+  t0:0, relayAt:0, gameEndAt:0, endReason:'',
+  myPos:null, gpsOk:false, gpsErr:false,
+  oob:{ active:false, deadline:0, eliminated:false },
+  nextPingAt:Infinity, lastManualPing:0,
+  lastPosSent:0, tagArmed:0,
+  drawing:false, drawPts:[], drawLayer:null, centeredOnce:false,
+  log:[],
+  started:false
+};
+
+let map=null, meMarker=null, zoneLayer=null, drawPoly=null, drawLine=null;
+const markers = new Map();   // tag -> L.Marker
+let tickHandle=null, wakeLock=null, watchId=null, hostSyncHandle=null;
+
+/* ---------------- name memory ---------------- */
+try { const n = localStorage.getItem('wgt.name'); if(n) $('inName').value = n; } catch(e){}
+(function(){
+  const m = (location.hash||'').match(/([A-Za-z]{4})$/);
+  if(m){ $('inCode').value = m[1].toUpperCase(); }
+})();
+
+function readName(){
+  const v = ($('inName').value||'').trim().replace(/\s+/g,' ').slice(0,12);
+  if(!v){ homeErr('ENTER A NAME'); return null; }
+  try { localStorage.setItem('wgt.name', v); } catch(e){}
+  S.name = v;
+  return v;
+}
+function homeErr(t){ $('homeErr').textContent = t || ''; }
+
+/* ---------------- toast ---------------- */
+let toastHandle=null;
+function toast(msg, kind){
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = 'on' + (kind ? ' '+kind : '');
+  clearTimeout(toastHandle);
+  toastHandle = setTimeout(function(){ el.className=''; }, 2600);
+}
+
+/* ============================================================
+   GEO / ZONE MATH
+   ============================================================ */
+function pointInPoly(lat, lng, poly){
+  if(!poly || poly.length < 3) return true;
+  let inside = false;
+  for(let i=0, j=poly.length-1; i<poly.length; j=i++){
+    const yi = poly[i][0], xi = poly[i][1];
+    const yj = poly[j][0], xj = poly[j][1];
+    const hit = ((yi > lat) !== (yj > lat)) && (lng < (xj-xi) * (lat-yi) / ((yj-yi)||1e-12) + xi);
+    if(hit) inside = !inside;
+  }
+  return inside;
+}
+function insideZone(lat, lng){ return pointInPoly(lat, lng, S.settings.zone); }
+function zoneAreaOk(poly){ return !!(poly && poly.length >= 3); }
+
+/* ============================================================
+   SCREEN / MAP
+   ============================================================ */
+function enterMap(){
+  $('home').classList.add('hidden');
+  $('mapwrap').classList.remove('hidden');
+  $('chipRoom').innerHTML = 'ROOM <b>'+S.room+'</b>';
+  if(!map) initMap();
+  setTimeout(function(){ if(map) map.invalidateSize(); }, 120);
+}
+
+function initMap(){
+  map = L.map('map', { zoomControl:false, attributionControl:true, preferCanvas:true })
+        .setView([20, 0], 2);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution:'&copy; OpenStreetMap'
+  }).addTo(map);
+  L.control.zoom({ position:'bottomright' }).addTo(map);
+  map.on('click', function(e){
+    if(!S.drawing) return;
+    S.drawPts.push([e.latlng.lat, e.latlng.lng]);
+    paintDraw();
+    setTxt($('drawHint'), S.drawPts.length + ' POINT' + (S.drawPts.length===1?'':'S') + ' - TAP TO ADD MORE');
+  });
+  map.on('dragstart', function(){ /* keep simple */ });
+  drawZone();
+  placeMe(true);
+}
+
+function placeMe(center){
+  if(!S.myPos || !map) return;
+  if(center && S.centeredOnce) center = false;
+  if(!meMarker){
+    meMarker = L.marker([S.myPos.lat, S.myPos.lng], {
+      icon: L.divIcon({ className:'', html:'<div class="meDot"></div>', iconSize:[22,22], iconAnchor:[11,11] }),
+      interactive:false, zIndexOffset:900
+    }).addTo(map);
+  } else {
+    meMarker.setLatLng([S.myPos.lat, S.myPos.lng]);
+  }
+  if(center && map){ map.setView([S.myPos.lat, S.myPos.lng], 17); S.centeredOnce = true; }
+}
+
+function drawZone(){
+  if(zoneLayer){ map.removeLayer(zoneLayer); zoneLayer = null; }
+  const z = S.settings.zone;
+  if(zoneAreaOk(z)){
+    zoneLayer = L.polygon(z, { color:'#3aa0ff', weight:4, fillColor:'#3aa0ff', fillOpacity:.10, interactive:false }).addTo(map);
+  }
+}
+
+const drawDots = [];
+function clearDrawPoints(){
+  drawDots.forEach(function(d){ try { map.removeLayer(d); } catch(e){} });
+  drawDots.length = 0;
+}
+function paintDraw(){
+  if(!map) return;
+  if(drawLine){ map.removeLayer(drawLine); drawLine=null; }
+  if(drawPoly){ map.removeLayer(drawPoly); drawPoly=null; }
+  clearDrawPoints();
+  if(S.drawPts.length >= 2){
+    drawLine = L.polyline(S.drawPts, { color:'#ffb020', weight:4, dashArray:'8 6', interactive:false }).addTo(map);
+  }
+  if(S.drawPts.length >= 3){
+    drawPoly = L.polygon(S.drawPts, { color:'#ffb020', weight:2, fillOpacity:.08, interactive:false }).addTo(map);
+  }
+  S.drawPts.forEach(function(p){
+    drawDots.push(L.circleMarker(p, { radius:7, color:'#fff', weight:3, fillColor:'#ffb020', fillOpacity:1, interactive:false }).addTo(map));
+  });
+}
+
+/* ============================================================
+   GPS
+   ============================================================ */
+function startGPS(){
+  if(!navigator.geolocation){ toast('THIS BROWSER HAS NO GPS', 'bad'); S.gpsErr=true; return; }
+  watchId = navigator.geolocation.watchPosition(onFix, onFixErr, {
+    enableHighAccuracy:true, maximumAge:2000, timeout:25000
+  });
+}
+function onFix(pos){
+  const c = pos.coords;
+  S.myPos = { lat:c.latitude, lng:c.longitude, acc:Math.round(c.accuracy||0), at:Date.now() };
+  S.gpsOk = true; S.gpsErr = false;
+  placeMe(true);
+  if(S.role) broadcastPos(false);
+  checkZone();
+  updateMeBlock();
+}
+function onFixErr(err){
+  S.gpsErr = true;
+  if(err && err.code === 1){ toast('LOCATION BLOCKED - ENABLE IT', 'bad'); }
+  updateMeBlock();
+}
+
+function broadcastPos(force){
+  const t = Date.now();
+  if(!S.myPos) return;
+  if(!force && t - S.lastPosSent < POS_SEND_MS) return;
+  S.lastPosSent = t;
+  const msg = { t:'pos', lat:S.myPos.lat, lng:S.myPos.lng, acc:S.myPos.acc };
+  if(S.role === 'host') hostSelfPos(msg);
+  else if(S.hostConn && S.hostConn.open) send(S.hostConn, msg);
+}
+
+/* ============================================================
+   OUT OF BOUNDS
+   ============================================================ */
+function checkZone(){
+  if(!S.myPos || S.phase !== 'playing' || !S.myAlive) return;
+  if(!zoneAreaOk(S.settings.zone)) return;
+  const os = S.oob;
+  if(os.eliminated) return;
+  const inside = insideZone(S.myPos.lat, S.myPos.lng);
+  if(inside){
+    if(os.active){
+      os.active = false; os.deadline = 0;
+      $('oob').classList.remove('on');
+      toast('BACK IN ZONE', 'good');
+    }
+  } else if(!os.active){
+    os.active = true;
+    os.deadline = nowMs() + GRACE_MS;
+    $('oob').classList.add('on');
+    $('oob').classList.remove('elim');
+    setTxt($('oobTitle'), 'OUT OF ZONE');
+    setTxt($('oobSub'), 'RETURN INSIDE THE PLAY ZONE');
+    updateMeBlock();
+  }
+}
+
+function oobTick(){
+  const os = S.oob;
+  if(!os.active) return;
+  const left = os.deadline - nowMs();
+  if(left > 0){
+    setTxt($('oobTimer'), mmss(left));
+  } else {
+    os.active = false;
+    os.eliminated = true;
+    $('oob').classList.add('on');
+    $('oob').classList.add('elim');
+    setTxt($('oobTitle'), 'ELIMINATED');
+    setTxt($('oobTimer'), '0:00');
+    setTxt($('oobSub'), 'YOU STAYED OUTSIDE THE ZONE');
+    setTimeout(function(){ $('oob').classList.remove('on'); }, 4000);
+    selfEliminate('OUT OF ZONE');
+  }
+}
+
+/* ============================================================
+   ELIMINATION
+   ============================================================ */
+function selfEliminate(reason){
+  if(!S.myAlive) return;
+  S.myAlive = false;
+  if(S.role === 'host') hostEliminate(S.myTag, reason);
+  else if(S.hostConn && S.hostConn.open) send(S.hostConn, { t:'act', a:'out', reason:reason });
+  updateTagButton();
+  updateMeBlock();
+}
+
+function updateTagButton(){
+  const show = S.phase === 'playing' && S.myAlive;
+  $('btnTag').classList.toggle('hidden', !show);
+  $('btnTag2').classList.toggle('hidden', !show);
+  const armed = (Date.now() - S.tagArmed) < 3000;
+  const label = S.myAlive ? (armed ? 'TAP AGAIN TO CONFIRM' : 'I AM TAGGED') : 'YOU ARE OUT';
+  setTxt($('btnTag'), label);
+  setTxt($('btnTag2'), S.myAlive ? (armed ? 'TAP AGAIN TO CONFIRM' : 'I AM TAGGED / OUT') : 'YOU ARE OUT');
+  clearTimeout(updateTagButton._h);
+  if(armed) updateTagButton._h = setTimeout(updateTagButton, 3100);
+}
+
+function tagTap(){
+  if(!S.myAlive) return;
+  const t = Date.now();
+  if(t - S.tagArmed > 3000){
+    S.tagArmed = t;
+    updateTagButton();
+    return;
+  }
+  S.tagArmed = 0;
+  selfEliminate('TAGGED');
+}
+
+/* ============================================================
+   PLAYER MODEL + ROSTER
+   ============================================================ */
+function addPlayer(p){
+  const cur = S.players.get(p.tag);
+  if(cur) return Object.assign(cur, p);
+  S.players.set(p.tag, Object.assign({
+    tag:p.tag, name:p.name || 'PLAYER', role:'runner', alive:true,
+    isHost:false, self:false, live:null, pub:null, outside:false, connected:true, order:S.players.size
+  }, p));
+  return S.players.get(p.tag);
+}
+function me(){ return S.players.get(S.myTag) || null; }
+function amHunter(){ const m = me(); return !!(m && m.role === 'hunter'); }
+function alivePlayers(){ return Array.from(S.players.values()).filter(function(p){ return p.alive; }); }
+function findHolderHunter(){ return Array.from(S.players.values()).filter(function(p){ return p.role==='hunter' && p.alive; }); }
+
+function rosterPayload(){
+  return Array.from(S.players.values()).map(function(p){
+    return { tag:p.tag, name:p.name, role:p.role, alive:p.alive, isHost:p.isHost };
+  });
+}
+
+/* ============================================================
+   MESSAGING
+   ============================================================ */
+function send(conn, msg){
+  try { if(conn && conn.open) conn.conn ? conn.conn.send(msg) : conn.send(msg); } catch(e){}
+}
+function hostBroadcast(msg, exceptTag){
+  S.conns.forEach(function(conn, tag){
+    if(exceptTag && tag === exceptTag) return;
+    send(conn, msg);
+  });
+}
+function toHost(msg){
+  if(S.hostConn && S.hostConn.open) send(S.hostConn, msg);
+}
+
+/* ---------------- host side ---------------- */
+function hostPushRoster(){
+  hostBroadcast({ t:'roster', players: rosterPayload() });
+  renderRoster();
+  updatePanels();
+  const c = S.players.size;
+  setTxt($('panelPlayerCount'), c + (c===1?' PLAYER':' PLAYERS'));
+}
+
+function recomputeTimeline(){
+  if(S.t0){
+    S.relayAt = S.t0 + S.settings.head*1000;
+    S.gameEndAt = S.settings.len ? S.relayAt + S.settings.len*60000 : 0;
+  } else {
+    S.relayAt = 0; S.gameEndAt = 0;
+  }
+  if(S.phase === 'playing') S.nextPingAt = nextPingAfter(nowMs()+300);
+  updateChips();
+}
+
+function hostPushSettings(){
+  recomputeTimeline();
+  hostBroadcast({ t:'settings', settings:S.settings });
+  renderRules();
+  drawZone();
+  updateChips();
+}
+
+function revealHunter(p){
+  if(S.phase !== 'playing' || !S.settings.reveal) return;
+  if(p.role !== 'hunter' || !p.live) return;
+  hostBroadcast({ t:'hpos', tag:p.tag, lat:p.live.lat, lng:p.live.lng, acc:p.live.acc });
+}
+
+function hostSelfPos(msg){
+  const m = me();
+  if(!m) return;
+  m.live = { lat:msg.lat, lng:msg.lng, acc:msg.acc, at:Date.now() };
+  m.outside = zoneAreaOk(S.settings.zone) ? !insideZone(msg.lat, msg.lng) : false;
+  checkZone();
+  renderRoster();
+  revealHunter(m);
+}
+
+function hostHandlePos(tag, msg){
+  const p = S.players.get(tag);
+  if(!p) return;
+  p.live = { lat:msg.lat, lng:msg.lng, acc:msg.acc, at:Date.now() };
+  p.outside = zoneAreaOk(S.settings.zone) ? !insideZone(msg.lat, msg.lng) : false;
+  if(S.phase === 'lobby') refreshMarkers();
+  revealHunter(p);
+  renderRosterSoon();
+}
+
+function hostEliminate(tag, reason){
+  const p = S.players.get(tag);
+  if(!p || !p.alive) return;
+  p.alive = false;
+  if(tag === S.myTag){ S.myAlive = false; updateTagButton(); updateMeBlock(); }
+  if(p.role === 'hunter'){
+    hostLog(p.name.toUpperCase() + ' (HUNTER) IS OUT');
+  } else {
+    hostLog(p.name.toUpperCase() + ' IS OUT (' + reason + ')');
+  }
+  hostBroadcast({ t:'ev', txt: p.name.toUpperCase() + ' IS OUT (' + reason + ')' });
+  hostPushRoster();
+  refreshMarkers();
+  hostCheckEnd();
+}
+
+function hostCheckEnd(){
+  if(S.phase !== 'playing') return;
+  const alive = alivePlayers();
+  const runners = alive.filter(function(p){ return p.role === 'runner'; });
+  const hunters = alive.filter(function(p){ return p.role === 'hunter'; });
+  if(runners.length === 0){
+    hostEndGame(hunters.length ? 'ALL RUNNERS ELIMINATED' : 'NO PLAYERS LEFT');
+  } else if(hunters.length === 0){
+    hostEndGame('RUNNERS SURVIVED - HUNTER IS OUT');
+  }
+}
+
+function hostEndGame(reason){
+  if(S.phase === 'ended') return;
+  S.phase = 'ended'; S.endReason = reason;
+  hostBroadcast({ t:'end', reason:reason });
+  hostLog('GAME OVER - ' + reason);
+  hostBroadcast({ t:'ev', txt:'GAME OVER - ' + reason });
+  updatePanels(); updateClock(); updateChips(); updateTagButton();
+}
+
+function hostStartGame(){
+  const hunters = findHolderHunter();
+  const runners = Array.from(S.players.values()).filter(function(p){ return p.role === 'runner' && p.alive; });
+  if(hunters.length === 0){ toast('ASSIGN ONE HUNTER', 'bad'); return; }
+  if(runners.length === 0){ toast('NEED AT LEAST ONE RUNNER', 'bad'); return; }
+  S.t0 = Date.now();
+  S.relayAt = S.t0 + S.settings.head * 1000;
+  S.gameEndAt = S.settings.len ? S.relayAt + S.settings.len * 60000 : 0;
+  S.phase = 'playing';
+  S.nextPingAt = S.relayAt;
+  hostBroadcast({ t:'start', t0:S.t0, settings:S.settings });
+  hostLog('GAME STARTED');
+  hostBroadcast({ t:'ev', txt:'GAME STARTED' });
+  hostPushRoster();
+  updatePanels(); updateTagButton(); updateChips(); updateClock();
+  checkZone();
+  refreshMarkers();
+}
+
+function hostAbort(){
+  S.phase = 'lobby'; S.t0 = S.relayAt = S.gameEndAt = 0; S.endReason='';
+  S.nextPingAt = Infinity;
+  Array.from(S.players.values()).forEach(function(p){
+    p.alive = true; p.pub = null; p.outside = false;
+  });
+  S.myAlive = true;
+  S.oob.active = false; S.oob.eliminated = false;
+  $('oob').classList.remove('on');
+  hostBroadcast({ t:'lobby', settings:S.settings });
+  hostLog('BACK TO LOBBY');
+  hostBroadcast({ t:'ev', txt:'BACK TO LOBBY - ROLES RESET' });
+  hostPushRoster();
+  updatePanels(); updateTagButton(); updateClock(); updateChips();
+  checkZone();
+  refreshMarkers();
+}
+
+function hostPingFire(){
+  const snapshots = [];
+  Array.from(S.players.values()).forEach(function(p){
+    if(p.alive && p.live){
+      p.pub = { lat:p.live.lat, lng:p.live.lng, acc:p.live.acc, at:Date.now() };
+      snapshots.push({ tag:p.tag, lat:p.pub.lat, lng:p.pub.lng, acc:p.pub.acc });
+    }
+  });
+  // hunters that are remote clients receive the snapshot
+  S.players.forEach(function(p){
+    if(p.role === 'hunter' && p.tag !== S.myTag){
+      const conn = S.conns.get(p.tag);
+      if(conn) send(conn, { t:'hunt', list: snapshots });
+    }
+  });
+  hostLog('PING SENT');
+  hostBroadcast({ t:'pinged', at:Date.now() });
+  refreshMarkers();
+  if(amHunter()) setTimeout(fitAll, 120);
+}
+
+/* ---------------- client side ---------------- */
+function clientHandle(msg){
+  switch(msg.t){
+    case 'welcome': {
+      S.myTag = msg.tag;
+      try { sessionStorage.setItem('wgt.tag.' + S.room, msg.tag); } catch(e){}
+      S.room = msg.room || S.room;
+      S.settings = Object.assign(S.settings, msg.settings||{});
+      S.phase = msg.phase || 'lobby';
+      applyTime(msg);
+      S.players.clear();
+      (msg.players||[]).forEach(function(p){
+        const pl = addPlayer(p);
+        pl.self = (p.tag === S.myTag);
+      });
+      const self = S.players.get(S.myTag);
+      if(self){ self.isHost = false; }
+      S.myAlive = self ? self.alive : true;
+      if(S.phase === 'playing') S.oob.eliminated = !S.myAlive;
+      $('home').classList.add('hidden');
+      $('mapwrap').classList.remove('hidden');
+      $('chipRoom').innerHTML = 'ROOM <b>'+S.room+'</b>';
+      if(!map) initMap(); else { setTimeout(function(){ if(map) map.invalidateSize(); }, 120); }
+      drawZone(); placeMe(true);
+      renderRoster(); updatePanels(); updateClock(); updateChips(); updateTagButton(); refreshMarkers();
+      toHost({ t:'hello', name:S.name });
+      broadcastPos(true);
+      break;
+    }
+    case 'settings':
+      S.settings = Object.assign(S.settings, msg.settings||{});
+      applyTime({});
+      drawZone(); renderRules(); updateChips(); checkZone();
+      break;
+    case 'roster': {
+      const keep = new Map(S.players);
+      S.players.clear();
+      (msg.players||[]).forEach(function(p){
+        const old = keep.get(p.tag);
+        const pl = addPlayer(p);
+        pl.self = (p.tag === S.myTag);
+        if(old){ pl.live = old.live; pl.pub = old.pub; pl.outside = old.outside; }
+      });
+      const self = S.players.get(S.myTag);
+      if(self) S.myAlive = self.alive;
+      renderRoster(); refreshMarkers(); updatePanels(); updateTagButton(); updateMeBlock();
+      break;
+    }
+    case 'start':
+      S.t0 = msg.t0;
+      S.settings = Object.assign(S.settings, msg.settings||{});
+      S.phase = 'playing';
+      applyTime(msg);
+      S.myAlive = true;
+      S.players.forEach(function(p){ p.alive = true; p.pub = null; });
+      S.oob.active = false; S.oob.eliminated = false;
+      $('oob').classList.remove('on');
+      updatePanels(); updateClock(); updateChips(); updateTagButton(); refreshMarkers();
+      log('GAME STARTED'); checkZone();
+      break;
+    case 'lobby':
+      S.phase = 'lobby'; S.t0 = S.relayAt = S.gameEndAt = 0; S.endReason='';
+      S.settings = Object.assign(S.settings, msg.settings||{});
+      S.players.forEach(function(p){ p.alive = true; p.pub = null; p.outside = false; });
+      S.myAlive = true; S.oob.active=false; S.oob.eliminated=false;
+      $('oob').classList.remove('on');
+      updatePanels(); updateClock(); updateChips(); updateTagButton(); refreshMarkers(); drawZone();
+      log('BACK TO LOBBY');
+      break;
+    case 'end':
+      S.phase = 'ended'; S.endReason = msg.reason || '';
+      updatePanels(); updateClock(); updateChips(); updateTagButton();
+      log('GAME OVER - ' + S.endReason);
+      break;
+    case 'hunt':
+      (msg.list||[]).forEach(function(s){
+        const p = S.players.get(s.tag);
+        if(p) p.pub = { lat:s.lat, lng:s.lng, acc:s.acc, at:Date.now() };
+      });
+      refreshMarkers();
+      setTimeout(fitAll, 120);
+      log('PING RECEIVED');
+      toast('PING RECEIVED', 'good');
+      break;
+    case 'hpos': {
+      const p = S.players.get(msg.tag);
+      if(p){ p.live = { lat:msg.lat, lng:msg.lng, acc:msg.acc, at:Date.now() }; refreshMarkers(); }
+      break;
+    }
+    case 'ev':
+      log(msg.txt || '');
+      break;
+    case 'sync':
+      S.clockOffset = Date.now() - msg.now;
+      if(!S.t0 && msg.t0){ S.t0 = msg.t0; applyTime(msg); }
+      break;
+    case 'pinged':
+      log('PING SENT');
+      break;
+    case 'pingreq':
+      break;
+    case 'bye':
+      toast('HOST DISCONNECTED', 'bad');
+      netChip('OFFLINE', 'badc');
+      break;
+  }
+}
+
+function applyTime(msg){
+  if(msg.t0 !== undefined){ S.t0 = msg.t0; }
+  S.relayAt = S.t0 ? S.t0 + S.settings.head*1000 : 0;
+  S.gameEndAt = (S.t0 && S.settings.len) ? S.relayAt + S.settings.len*60000 : 0;
+}
+
+/* ============================================================
+   HOST CONNECTION HANDLING
+   ============================================================ */
+function startHost(){
+  const name = readName(); if(!name) return;
+  S.name = name;
+  S.role = 'host';
+  tryHostPeer(0, []);
+}
+
+function tryHostPeer(attempt, triedCodes){
+  const code = genCode();
+  if(triedCodes.length > 5){ homeErr('COULD NOT GET A ROOM CODE - TRY AGAIN'); return; }
+  homeErr('CREATING ROOM...');
+  const peer = new Peer(APP_PREFIX + code.toLowerCase(), { debug:0 });
+
+  peer.on('open', function(id){
+    S.peer = peer;
+    S.room = code;
+    S.myTag = 'host';
+    addPlayer({ tag:'host', name:S.name, role:'runner', alive:true, isHost:true, self:true });
+    enterMap();
+    homeErr('');
+    startGPS();
+    startTicker();
+    hostSyncHandle = setInterval(function(){
+      hostBroadcast({ t:'sync', now:Date.now(), t0:S.t0 });
+    }, 5000);
+    updatePanels(); renderRules(); updateChips(); updateClock(); updateTagButton(); renderRoster();
+    setTxt($('panelPlayerCount'), '1 PLAYER');
+    log('ROOM CREATED - SHARE CODE ' + code);
+    keepAwake();
+  });
+
+  peer.on('connection', function(conn){
+    conn.on('open', function(){
+      conn.__tag = null;
+      conn.on('data', function(msg){ hostHandleData(conn, msg); });
+      conn.on('close', function(){ hostDropConn(conn); });
+      conn.on('error', function(){ hostDropConn(conn); });
+    });
+  });
+
+  peer.on('error', function(err){
+    const type = err && err.type;
+    if(type === 'unavailable-id'){
+      try { peer.destroy(); } catch(e){}
+      triedCodes.push(code);
+      tryHostPeer(attempt+1, triedCodes);
+      return;
+    }
+    if(type === 'network' || type === 'server-error' || type === 'socket-error'){
+      netChip('SIGNAL ERR', 'badc');
+      if(attempt < 2){
+        setTimeout(function(){ try { peer.destroy(); } catch(e){} tryHostPeer(attempt+1, triedCodes); }, 1500);
+      } else {
+        homeErr('SIGNALING SERVER UNREACHABLE - RETRY');
+      }
+      return;
+    }
+    netChip('ERROR', 'badc');
+  });
+
+  peer.on('disconnected', function(){
+    netChip('RECONNECTING', 'warnc');
+    try { peer.reconnect(); } catch(e){}
+  });
+}
+
+function hostDropConn(conn){
+  const tag = conn.__tag;
+  if(!tag) return;
+  if(S.conns.get(tag) !== conn) return;
+  S.conns.delete(tag);
+  const p = S.players.get(tag);
+  if(p){
+    p.connected = false;
+    p.live = null;
+    p.pub = null;
+    hostLog((p.name||'PLAYER').toUpperCase() + ' DISCONNECTED');
+    hostBroadcast({ t:'ev', txt:(p.name||'PLAYER').toUpperCase() + ' DISCONNECTED' });
+  }
+  hostPushRoster();
+  refreshMarkers();
+  renderLog();
+}
+
+function hostHandleData(conn, msg){
+  if(!msg || !msg.t) return;
+  const tag = conn.__tag;
+
+  if(msg.t === 'hello'){
+    if(tag){ // already registered, just update name
+      const p = S.players.get(tag); if(p) p.name = (msg.name||p.name).slice(0,12);
+      conn.__name = msg.name;
+      return;
+    }
+    const clean = String(msg.name||'PLAYER').replace(/[<>]/g,'').trim().slice(0,12) || 'PLAYER';
+    let ptag = null;
+    const prev = msg.tag ? S.players.get(String(msg.tag)) : null;
+    if(prev && !S.conns.has(prev.tag)) ptag = prev.tag;
+    if(!ptag) ptag = 'p' + uid().slice(0,5);
+    conn.__tag = ptag;
+    conn.__name = clean;
+    S.conns.set(ptag, conn);
+    if(prev){
+      prev.connected = true;
+      prev.name = clean;
+      prev.live = null;
+    } else {
+      addPlayer({ tag:ptag, name:clean, role:'runner', alive:true, isHost:false });
+    }
+    const payload = {
+      t:'welcome', tag:ptag, room:S.room, settings:S.settings, phase:S.phase,
+      t0:S.t0, players: rosterPayload()
+    };
+    send(conn, payload);
+    hostBroadcast({ t:'sync', now:Date.now(), t0:S.t0 });
+    hostLog(clean.toUpperCase() + ' JOINED');
+    hostBroadcast({ t:'ev', txt:clean.toUpperCase() + ' JOINED' }, ptag);
+    hostPushRoster();
+    toast(clean.toUpperCase() + ' JOINED', 'good');
+    setTimeout(fitAll, 400);
+    return;
+  }
+
+  if(!tag){ return; }
+
+  if(msg.t === 'pos'){
+    hostHandlePos(tag, msg);
+  } else if(msg.t === 'act'){
+    if(msg.a === 'out'){
+      const p = S.players.get(tag);
+      if(p) hostEliminate(tag, (msg.reason === 'OUT OF ZONE') ? 'OUT OF ZONE' : 'TAGGED');
+    }
+  } else if(msg.t === 'pingreq'){
+    const p = S.players.get(tag);
+    if(p && p.role === 'runner' && p.live){
+      hostPingFire();
+    }
+  }
+}
+
+/* ============================================================
+   CLIENT CONNECTION
+   ============================================================ */
+function startJoin(){
+  const name = readName(); if(!name) return;
+  const code = ($('inCode').value||'').trim().toUpperCase();
+  if(code.length !== 4){ homeErr('ENTER THE 4 LETTER CODE'); return; }
+  S.name = name;
+  try { S.myTag = sessionStorage.getItem('wgt.tag.' + code) || null; } catch(e){ S.myTag = null; }
+  S.role = 'client';
+  S.room = code;
+  homeErr('CONNECTING...');
+  connectToHost(code, 0);
+}
+
+function connectToHost(code, attempt){
+  const peer = new Peer(APP_PREFIX + 'x' + uid(), { debug:0 });
+  S.peer = peer;
+  let settled = false;
+
+  peer.on('open', function(){
+    const conn = peer.connect(APP_PREFIX + code.toLowerCase(), { reliable:true });
+    S.hostConn = conn;
+    const timeout = setTimeout(function(){
+      if(settled) return;
+      settled = true;
+      try { peer.destroy(); } catch(e){}
+      if(attempt < 1){
+        homeErr('ROOM NOT FOUND - RETRYING...');
+        setTimeout(function(){ connectToHost(code, attempt+1); }, 800);
+      } else {
+        homeErr('ROOM NOT FOUND. CHECK THE CODE AND START OVER.');
+      }
+    }, 12000);
+
+    conn.on('open', function(){
+      if(settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      send(conn, { t:'hello', name:S.name, tag:S.myTag || null });
+      netChip('CONNECTED', 'ok');
+      startGPS();
+      startTicker();
+      keepAwake();
+      log('CONNECTED TO ROOM ' + code);
+    });
+
+    conn.on('data', function(msg){ if(msg && msg.t) clientHandle(msg); });
+
+    conn.on('close', function(){
+      netChip('DISCONNECTED', 'badc');
+      log('CONNECTION LOST');
+      if(S.phase !== 'ended') toast('CONNECTION LOST', 'bad');
+      attemptReconnect(code, 0);
+    });
+  });
+
+  peer.on('error', function(err){
+    const type = err && err.type;
+    if(!settled && (type === 'peer-unavailable' || type === 'network' || type === 'server-error')){
+      settled = true;
+      if(attempt < 1){
+        homeErr('ROOM NOT FOUND - RETRYING...');
+        try { peer.destroy(); } catch(e){}
+        setTimeout(function(){ connectToHost(code, attempt+1); }, 900);
+      } else {
+        homeErr('ROOM NOT FOUND. CHECK THE CODE AND START OVER.');
+      }
+      return;
+    }
+    netChip('ERROR', 'badc');
+  });
+}
+
+function attemptReconnect(code, n){
+  if(n > 2) return;
+  setTimeout(function(){
+    homeErr('');
+    try { if(S.peer) S.peer.destroy(); } catch(e){}
+    netChip('RECONNECTING', 'warnc');
+    connectToHost(code, 1);
+  }, 1500 + n*1500);
+}
+
+/* ============================================================
+   MAIN TICK / CLOCK
+   ============================================================ */
+function startTicker(){
+  if(tickHandle) return;
+  tickHandle = setInterval(tick, TICK);
+}
+
+function tick(){
+  const t = nowMs();
+  // phase transitions from the master clock
+  if(S.phase === 'playing' && S.gameEndAt && t >= S.gameEndAt){
+    if(S.role === 'host'){
+      hostEndGame('TIME UP');
+    } else {
+      S.phase = 'ended'; S.endReason = S.endReason || 'TIME UP';
+      updatePanels(); updateClock(); updateChips(); updateTagButton();
+    }
+  }
+  updateClock();
+  updateChips();
+  oobTick();
+  if(S.role === 'host' && S.phase === 'playing'){
+    if(t >= S.nextPingAt){
+      hostPingFire();
+      S.nextPingAt = nextPingAfter(S.nextPingAt + 1);
+    }
+  }
+  updateTagButtonSoon();
+}
+
+function nextPingAfter(ms){
+  const ping = S.settings.ping;
+  if(!ping || ping <= 0 || !S.relayAt) return Infinity;
+  const step = ping*1000;
+  if(ms <= S.relayAt) return S.relayAt;
+  const k = Math.ceil((ms - S.relayAt) / step);
+  let t = S.relayAt + k*step;
+  if(t < ms) t += step;
+  if(S.gameEndAt && t > S.gameEndAt) return Infinity;
+  return t;
+}
+
+let tagBtnNext = 0;
+function updateTagButtonSoon(){
+  const t = Date.now();
+  if(t < tagBtnNext) return;
+  tagBtnNext = t + 1000;
+  updateTagButton();
+}
+
+function updateClock(){
+  const main = $('clockMain'), sub = $('clockSub');
+  const t = nowMs();
+  main.className = 'clockMain';
+
+  if(S.phase === 'lobby'){
+    setTxt(main, 'LOBBY');
+    setTxt(sub, S.role === 'host' ? 'SET ROLES AND PRESS START' : 'WAITING FOR HOST TO START');
+    return;
+  }
+  if(S.phase === 'ended'){
+    main.className = 'clockMain bad';
+    setTxt(main, 'GAME OVER');
+    setTxt(sub, S.endReason || 'GAME FINISHED');
+    return;
+  }
+  // playing
+  if(t < S.relayAt){
+    main.className = 'clockMain warn';
+    setTxt(main, mmss(S.relayAt - t));
+    setTxt(sub, 'HEAD START - HUNTER LOCKED');
+    return;
+  }
+  if(S.gameEndAt){
+    main.className = 'clockMain';
+    setTxt(main, mmss(S.gameEndAt - t));
+    setTxt(sub, 'TIME LEFT');
+  } else {
+    main.className = 'clockMain go';
+    setTxt(main, mmss(t - S.relayAt));
+    setTxt(sub, 'GAME TIME');
+  }
+}
+
+/* ============================================================
+   CHIPS
+   ============================================================ */
+let chipsStamp = 0;
+function updateChips(force){
+  const tNow = Date.now();
+  if(!force && tNow - chipsStamp < 400) return;
+  chipsStamp = tNow;
+  const wrap = $('chipWrap');
+  const chips = [];
+  const st = S.settings;
+  chips.push(zoneAreaOk(st.zone) ? 'ZONE SET' : 'NO ZONE');
+  chips.push('PING ' + mmss(st.ping*1000));
+  if(S.phase === 'playing'){
+    const alive = alivePlayers().length;
+    chips.push('ALIVE ' + alive + '/' + S.players.size);
+    if(amHunter() && S.settings.reveal){
+      chips.push('HUNTER VISIBLE');
+    }
+    if(S.relayAt && nowMs() >= S.relayAt){
+      const np = (S.role === 'host') ? S.nextPingAt : nextPingAfter(nowMs());
+      if(isFinite(np)){
+        chips.push((np <= S.relayAt + 500 ? 'REVEAL IN ' : 'NEXT PING ') + mmss(np - nowMs()));
+      } else if(S.settings.ping > 0){
+        chips.push('PING ' + mmss(S.settings.ping*1000));
+      }
+    }
+  }
+  if(S.gpsErr) chips.push('GPS OFF');
+  if(S.role !== 'host' && !(S.hostConn && S.hostConn.open)) chips.push('OFFLINE');
+  const html = chips.map(function(c){ return '<span class="chip">'+c+'</span>'; }).join('');
+  if(wrap.__last !== html){ wrap.innerHTML = html; wrap.__last = html; }
+
+  // network chip
+  if(S.role === 'host') netChip(S.conns.size ? (S.conns.size+1)+' ONLINE' : 'WAITING', S.conns.size ? 'ok' : '');
+}
+
+function netChip(txt, cls){
+  const el = $('chipNet');
+  el.textContent = txt;
+  el.className = 'chip ' + (cls||'');
+}
+
+/* ============================================================
+   MARKERS
+   ============================================================ */
+function fitAll(){
+  if(!map) return;
+  const pts = [];
+  if(S.myPos) pts.push([S.myPos.lat, S.myPos.lng]);
+  markers.forEach(function(m){ const ll = m.getLatLng(); pts.push([ll.lat, ll.lng]); });
+  if(pts.length === 1){ map.setView(pts[0], 17); return; }
+  if(pts.length > 1){
+    map.fitBounds(L.latLngBounds(pts).pad(0.25), { maxZoom:18, animate:true });
+  }
+}
+
+function markerIcon(p){
+  let cls = 'runner', label = (p.name||'?').slice(0,3).toUpperCase();
+  if(!p.alive) cls = 'out';
+  else if(p.role === 'hunter') cls = 'hunter';
+  const size = 44;
+  return L.divIcon({
+    className:'',
+    html:'<div class="pin '+cls+'" style="width:'+size+'px;height:'+size+'px">'+label+'</div>',
+    iconSize:[size,size], iconAnchor:[size/2,size/2]
+  });
+}
+
+function refreshMarkers(){
+  if(!map) return;
+  const keep = new Set();
+  const holderHunter = amHunter();
+  S.players.forEach(function(p){
+    if(p.tag === S.myTag) return;
+    let pos = null;
+    if(S.phase === 'lobby'){
+      if(p.live) pos = { lat:p.live.lat, lng:p.live.lng };
+    } else if(p.role === 'hunter'){
+      if(S.settings.reveal && p.live) pos = { lat:p.live.lat, lng:p.live.lng };
+    } else if(holderHunter && p.pub){
+      pos = { lat:p.pub.lat, lng:p.pub.lng };
+    }
+    if(!pos){ return; }
+    keep.add(p.tag);
+    let m = markers.get(p.tag);
+    if(!m){
+      m = L.marker([pos.lat, pos.lng], { icon: markerIcon(p) }).addTo(map);
+      markers.set(p.tag, m);
+    } else {
+      m.setLatLng([pos.lat, pos.lng]);
+      m.setIcon(markerIcon(p));
+    }
+  });
+  markers.forEach(function(m, tag){
+    if(!keep.has(tag)){ map.removeLayer(m); markers.delete(tag); }
+  });
+}
+
+let rosterSoonHandle=null;
+function renderRosterSoon(){
+  if(rosterSoonHandle) return;
+  rosterSoonHandle = setTimeout(function(){ rosterSoonHandle=null; renderRoster(); }, 600);
+}
+
+/* ============================================================
+   RENDER: ROSTER / RULES / PANELS / LOG
+   ============================================================ */
+function renderRoster(){
+  const list = $('rosterList');
+  const arr = Array.from(S.players.values()).sort(function(a,b){
+    if(a.isHost !== b.isHost) return a.isHost ? -1 : 1;
+    return (a.order||0) - (b.order||0);
+  });
+  if(!arr.length){ list.innerHTML = '<div class="muted sm">NO PLAYERS YET</div>'; return; }
+  const isHost = S.role === 'host';
+  const html = arr.map(function(p){
+    const roleCls = p.role === 'hunter' ? 'hunter' : 'runner';
+    const roleTxt = p.role === 'hunter' ? 'HUNTER' : 'RUNNER';
+    const badges = [];
+    if(p.isHost) badges.push('<span class="badge host">HOST</span>');
+    badges.push('<span class="badge '+roleCls+'">'+roleTxt+'</span>');
+    if(!p.alive) badges.push('<span class="badge out">OUT</span>');
+    if(p.outside && p.alive && S.phase === 'playing') badges.push('<span class="badge out">OUTSIDE</span>');
+    let acts = '';
+    if(isHost && S.phase !== 'playing' && S.phase !== 'ended'){
+      acts = '<div class="pActs">'+
+        '<button class="btn sm danger'+(p.role==='hunter'?' sel':'')+'" data-act="hunter" data-tag="'+p.tag+'">HUNTER</button>'+
+        '<button class="btn sm go'+(p.role==='runner'?' sel':'')+'" data-act="runner" data-tag="'+p.tag+'">RUNNER</button>'+
+      '</div>';
+    } else if(isHost && S.phase === 'playing' && p.alive){
+      acts = '<div class="pActs"><button class="btn sm ghost" data-act="kill" data-tag="'+p.tag+'">MARK OUT</button></div>';
+    }
+    if(isHost && !p.connected && p.tag !== S.myTag){
+      acts += '<div class="pActs"><button class="btn sm ghost" data-act="remove" data-tag="'+p.tag+'">REMOVE OFFLINE PLAYER</button></div>';
+    }
+    const selfMark = (p.tag === S.myTag) ? ' me' : '';
+    const meta = p.tag === S.myTag ? 'YOU' : (!p.connected ? 'OFFLINE' : (p.live ? 'GPS LIVE' : 'NO GPS'));
+    return '<div class="pRow'+selfMark+(p.alive?'':' dead')+'">'+
+      '<div class="pRowTop"><div class="pName">'+esc(p.name)+'</div><div class="pMeta">'+meta+'</div></div>'+
+      '<div class="pRowTop">'+badges.join(' ')+'</div>'+
+      acts+
+    '</div>';
+  }).join('');
+  list.innerHTML = html;
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function renderRules(){
+  const st = S.settings;
+  setTxt($('valHead'), mmss(st.head*1000));
+  setTxt($('valPing'), mmss(st.ping*1000));
+  setTxt($('valLen'), st.len ? (st.len + ' MIN') : 'NO LIMIT');
+  setTxt($('valReveal'), st.reveal ? 'ON' : 'OFF');
+  setTxt($('valZone'), zoneAreaOk(st.zone) ? (st.zone.length + ' CORNERS') : 'NONE');
+  $('valAlive').textContent = alivePlayers().length + ' / ' + S.players.size;
+  markSelected('[data-head]', 'head', String(st.head));
+  markSelected('[data-ping]', 'ping', String(st.ping));
+  markSelected('[data-len]', 'len', String(st.len));
+  markSelected('[data-reveal]', 'reveal', String(st.reveal));
+}
+
+function markSelected(sel, key, val){
+  document.querySelectorAll(sel).forEach(function(b){
+    b.classList.toggle('sel', b.getAttribute('data-'+key) === val);
+  });
+}
+
+function updatePanels(){
+  const isHost = S.role === 'host';
+  $('blkHostSetup').classList.toggle('hidden', !isHost || S.phase === 'playing' || S.phase === 'ended');
+  $('blkHostLive').classList.toggle('hidden', !isHost);
+  $('blkClientLive').classList.toggle('hidden', isHost);
+  $('btnStart').classList.toggle('hidden', !(isHost && S.phase === 'lobby'));
+  $('btnAbort').classList.toggle('hidden', !(isHost && S.phase !== 'lobby'));
+  $('btnEnd').classList.toggle('hidden', !(isHost && S.phase === 'playing'));
+  $('btnPingNow').classList.toggle('hidden', !(!isHost && S.phase === 'playing' && S.myAlive && !amHunter()));
+  $('hintPing').classList.toggle('hidden', $('btnPingNow').classList.contains('hidden'));
+  setTxt($('panelCode'), S.room || '----');
+  renderRules();
+  updateMeBlock();
+}
+
+function updateMeBlock(){
+  const m = me();
+  const nameEl = $('meName');
+  if(nameEl) setTxt(nameEl, (S.name || 'YOU'));
+  const roleEl = $('meRole');
+  if(roleEl){
+    const role = m ? m.role : 'runner';
+    roleEl.className = 'badge ' + (S.myAlive ? (role === 'hunter' ? 'hunter' : 'runner') : 'out');
+    roleEl.textContent = S.myAlive ? role.toUpperCase() : 'OUT';
+  }
+  setTxt($('meStatus'), S.myAlive ? (S.phase === 'playing' ? 'IN PLAY' : 'LOBBY') : 'ELIMINATED');
+  setTxt($('meGps'), S.gpsOk ? 'LIVE' : (S.gpsErr ? 'BLOCKED' : 'NO FIX'));
+  setTxt($('meAcc'), S.myPos ? ('+/- ' + S.myPos.acc + ' M') : '-');
+  let z = 'NO ZONE';
+  if(S.myPos && zoneAreaOk(S.settings.zone)){
+    z = insideZone(S.myPos.lat, S.myPos.lng) ? 'INSIDE' : 'OUTSIDE';
+  }
+  setTxt($('meZone'), z);
+}
+
+function log(txt){
+  if(!txt) return;
+  const d = new Date();
+  const hh = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  S.log.unshift({ t:hh, txt:txt });
+  if(S.log.length > 40) S.log.pop();
+  renderLog();
+  if(S.log.length === 1) renderLog();
+}
+function hostLog(txt){ log(txt); }
+
+function renderLog(){
+  const el = $('logList');
+  if(!S.log.length){ el.innerHTML = '<div class="muted sm">NOTHING YET</div>'; return; }
+  el.innerHTML = S.log.slice(0,14).map(function(r){
+    return '<div class="logRow"><span>'+r.t+'</span><span>'+esc(r.txt)+'</span></div>';
+  }).join('');
+}
+
+/* ============================================================
+   PANEL OPEN / CLOSE
+   ============================================================ */
+function openPanel(){
+  $('panel').classList.add('open');
+  updatePanels();
+  renderRoster();
+  renderLog();
+}
+function closePanel(){ $('panel').classList.remove('open'); }
+
+/* ============================================================
+   ZONE DRAWING
+   ============================================================ */
+function startDraw(){
+  if(S.role !== 'host') return;
+  S.drawing = true;
+  S.drawPts = S.settings.zone ? S.settings.zone.map(function(p){ return [p[0],p[1]]; }) : [];
+  closePanel();
+  document.body.classList.add('drawmode');
+  $('drawBar').classList.remove('hidden');
+  setTxt($('drawHint'), S.drawPts.length ? (S.drawPts.length + ' POINTS - TAP TO ADD MORE') : 'TAP THE MAP TO ADD ZONE CORNERS');
+  paintDraw();
+  if(map) map.invalidateSize();
+}
+function endDraw(save){
+  if(save){
+    if(S.drawPts.length < 3){ toast('NEED AT LEAST 3 POINTS', 'bad'); return; }
+    S.settings.zone = S.drawPts.map(function(p){ return [p[0],p[1]]; });
+    hostPushSettings();
+    toast('ZONE SAVED', 'good');
+    log('ZONE SET - ' + S.drawPts.length + ' CORNERS');
+  }
+  S.drawing = false;
+  if(drawLine){ map.removeLayer(drawLine); drawLine=null; }
+  if(drawPoly){ map.removeLayer(drawPoly); drawPoly=null; }
+  clearDrawPoints();
+  document.body.classList.remove('drawmode');
+  $('drawBar').classList.add('hidden');
+  drawZone();
+  updateChips();
+  renderRules();
+}
+
+/* ============================================================
+   WIRING
+   ============================================================ */
+function wire(){
+  $('btnHost').addEventListener('click', startHost);
+  $('btnJoin').addEventListener('click', startJoin);
+  $('inCode').addEventListener('input', function(){
+    this.value = (this.value||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,4);
+    homeErr('');
+  });
+  $('inCode').addEventListener('keydown', function(e){ if(e.key === 'Enter') startJoin(); });
+  $('btnMenu').addEventListener('click', function(){ openPanel(); });
+  $('btnMe').addEventListener('click', function(){
+    if(S.myPos && map){ S.centeredOnce = true; map.setView([S.myPos.lat, S.myPos.lng], Math.max(map.getZoom(), 17)); }
+    else { toast('NO GPS FIX YET', 'bad'); }
+  });
+  $('panelClose').addEventListener('click', closePanel);
+  $('panel').addEventListener('click', function(e){ if(e.target === $('panel')) closePanel(); });
+
+  $('btnTag').addEventListener('click', tagTap);
+  $('btnTag2').addEventListener('click', tagTap);
+
+  $('btnStart').addEventListener('click', function(){ hostStartGame(); closePanel(); });
+  $('btnAbort').addEventListener('click', function(){ hostAbort(); });
+  $('btnEnd').addEventListener('click', function(){ hostEndGame('ENDED BY HOST'); });
+
+  $('btnDraw').addEventListener('click', startDraw);
+  $('btnClearZone').addEventListener('click', function(){ S.drawPts = []; paintDraw(); setTxt($('drawHint'),'TAP THE MAP TO ADD ZONE CORNERS'); });
+  $('btnDoneDraw').addEventListener('click', function(){ endDraw(true); });
+  $('btnUndoPt').addEventListener('click', function(){
+    S.drawPts.pop(); paintDraw();
+    setTxt($('drawHint'), S.drawPts.length + ' POINT' + (S.drawPts.length===1?'':'S') + ' - TAP TO ADD MORE');
+  });
+  $('btnClearZone2').addEventListener('click', function(){
+    S.settings.zone = null; hostPushSettings(); drawZone(); toast('ZONE CLEARED');
+  });
+
+  function copyText(txt, okMsg){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast(okMsg, 'good'); }, function(){ toast('COPY FAILED'); });
+    } else { toast(txt); }
+  }
+  $('btnCopyCode').addEventListener('click', function(){ copyText(S.room || '', 'CODE COPIED'); });
+  $('btnCopyLink').addEventListener('click', function(){
+    const link = location.origin + location.pathname + '#' + (S.room || '');
+    copyText(link, 'JOIN LINK COPIED');
+  });
+
+  $('btnLeave').addEventListener('click', function(){
+    if(!confirm('LEAVE THE ROOM?')) return;
+    leave();
+  });
+
+  $('btnPingNow').addEventListener('click', function(){
+    const t = Date.now();
+    if(t - S.lastManualPing < MANUAL_PING_COOLDOWN){
+      toast('WAIT ' + Math.ceil((MANUAL_PING_COOLDOWN - (t-S.lastManualPing))/1000) + 'S', 'bad');
+      return;
+    }
+    S.lastManualPing = t;
+    toHost({ t:'pingreq' });
+    broadcastPos(true);
+    toast('PING REQUESTED', 'good');
+  });
+
+  // roster actions (delegated)
+  $('rosterList').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-act]');
+    if(!b) return;
+    const tag = b.getAttribute('data-tag');
+    const act = b.getAttribute('data-act');
+    if(S.role !== 'host') return;
+    const p = S.players.get(tag);
+    if(!p) return;
+    if(act === 'hunter'){
+      hostLog(p.name.toUpperCase() + ' IS THE HUNTER');
+      hostBroadcast({ t:'ev', txt:p.name.toUpperCase() + ' IS THE HUNTER' });
+      Array.from(S.players.values()).forEach(function(q){
+        q.role = (q.tag === tag) ? 'hunter' : 'runner';
+      });
+      hostPushRoster(); refreshMarkers();
+    } else if(act === 'runner'){
+      p.role = 'runner';
+      hostPushRoster(); refreshMarkers();
+    } else if(act === 'kill'){
+      hostEliminate(tag, 'MARKED BY HOST');
+    } else if(act === 'remove'){
+      S.players.delete(tag);
+      hostPushRoster();
+      refreshMarkers();
+      log('PLAYER REMOVED');
+    }
+  });
+
+  // rule buttons
+  document.querySelectorAll('[data-head]').forEach(function(b){
+    b.addEventListener('click', function(){
+      S.settings.head = parseInt(b.getAttribute('data-head'),10);
+      hostPushSettings();
+    });
+  });
+  document.querySelectorAll('[data-ping]').forEach(function(b){
+    b.addEventListener('click', function(){
+      S.settings.ping = parseInt(b.getAttribute('data-ping'),10);
+      hostPushSettings();
+      S.nextPingAt = nextPingAfter(nowMs()+1);
+    });
+  });
+  document.querySelectorAll('[data-len]').forEach(function(b){
+    b.addEventListener('click', function(){
+      S.settings.len = parseInt(b.getAttribute('data-len'),10);
+      hostPushSettings();
+    });
+  });
+  document.querySelectorAll('[data-reveal]').forEach(function(b){
+    b.addEventListener('click', function(){
+      S.settings.reveal = parseInt(b.getAttribute('data-reveal'),10);
+      hostPushSettings();
+      refreshMarkers();
+    });
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState === 'visible'){
+      keepAwake();
+      if(map) map.invalidateSize();
+      broadcastPos(true);
+      if(S.role === 'client' && S.hostConn && !S.hostConn.open) attemptReconnect(S.room, 0);
+    }
+  });
+  window.addEventListener('pagehide', function(){
+    try { if(S.peer) S.peer.destroy(); } catch(e){}
+  });
+}
+
+function keepAwake(){
+  if(!('wakeLock' in navigator)) return;
+  if(wakeLock) return;
+  navigator.wakeLock.request('screen').then(function(l){
+    wakeLock = l;
+    l.addEventListener('release', function(){ wakeLock = null; });
+  }).catch(function(){});
+}
+
+function leave(){
+  try { if(S.peer){ S.peer.destroy(); } } catch(e){}
+  if(watchId !== null && navigator.geolocation) { try{ navigator.geolocation.clearWatch(watchId); }catch(e){} }
+  location.reload();
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function genCode(){
+  let s = '';
+  for(let i=0;i<4;i++) s += LETTERS[Math.floor(Math.random()*LETTERS.length)];
+  return s;
+}
+
+wire();
+})();
+</script>
+</body>
+</html>
