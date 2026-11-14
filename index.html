@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Watergun Tag</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f14'/%3E%3Ccircle cx='32' cy='30' r='13' fill='%2322d17c'/%3E%3Crect x='28' y='40' width='8' height='14' rx='3' fill='%23ff3b3b'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
 :root{
@@ -114,8 +115,9 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
 .blk{background:#0f1720;border:2px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}
 .blkTitle{font-size:12px;letter-spacing:.18em;color:var(--dim)}
 .codeBig{font-size:40px;letter-spacing:.24em;text-align:center;color:#fff;font-variant-numeric:tabular-nums}
-.kv{display:flex;justify-content:space-between;gap:10px;font-size:13px;letter-spacing:.06em;color:var(--dim)}
-.kv b{color:#fff;font-size:14px;letter-spacing:.04em;text-align:right}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:13px;letter-spacing:.06em;color:var(--dim);line-height:1.3}
+.kv span{flex:1 1 auto}
+.kv b{color:#fff;font-size:14px;letter-spacing:.04em;text-align:right;white-space:nowrap;flex:0 0 auto}
 .rowline{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:18px}
 .badge{font-size:11px;letter-spacing:.14em;padding:5px 9px;border-radius:8px;background:#2a3b49;color:#fff}
 .badge.hunter{background:var(--bad)}
@@ -134,6 +136,8 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
 /* rules grid */
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.steps .btn{min-height:40px;font-size:13px}
 .stepper{display:flex;gap:8px}
 .stepper .btn{flex:1;min-height:44px;font-size:13px}
 .bigVal{font-size:24px;text-align:center;font-variant-numeric:tabular-nums;color:#fff}
@@ -258,6 +262,12 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
         <div class="blkTitle">RULES</div>
 
         <div class="kv"><span>HEAD START</span><b id="valHead">2:00</b></div>
+        <div class="steps">
+          <button class="btn sm ghost" data-step="head" data-d="-15">&minus;15S</button>
+          <button class="btn sm ghost" data-step="head" data-d="15">+15S</button>
+          <button class="btn sm ghost" data-step="head" data-d="-300">&minus;5M</button>
+          <button class="btn sm ghost" data-step="head" data-d="300">+5M</button>
+        </div>
         <div class="stepper">
           <button class="btn sm ghost" data-head="30">0:30</button>
           <button class="btn sm ghost" data-head="60">1:00</button>
@@ -267,6 +277,12 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
         </div>
 
         <div class="kv"><span>PING INTERVAL</span><b id="valPing">1:00</b></div>
+        <div class="steps">
+          <button class="btn sm ghost" data-step="ping" data-d="-15">&minus;15S</button>
+          <button class="btn sm ghost" data-step="ping" data-d="15">+15S</button>
+          <button class="btn sm ghost" data-step="ping" data-d="-300">&minus;5M</button>
+          <button class="btn sm ghost" data-step="ping" data-d="300">+5M</button>
+        </div>
         <div class="stepper">
           <button class="btn sm ghost" data-ping="30">0:30</button>
           <button class="btn sm ghost" data-ping="60">1:00</button>
@@ -275,19 +291,24 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
         </div>
 
         <div class="kv"><span>GAME LENGTH</span><b id="valLen">NO LIMIT</b></div>
+        <div class="steps">
+          <button class="btn sm ghost" data-step="len" data-d="-1">&minus;1M</button>
+          <button class="btn sm ghost" data-step="len" data-d="1">+1M</button>
+          <button class="btn sm ghost" data-step="len" data-d="-5">&minus;5M</button>
+          <button class="btn sm ghost" data-step="len" data-d="5">+5M</button>
+        </div>
         <div class="stepper">
           <button class="btn sm ghost" data-len="0">OFF</button>
           <button class="btn sm ghost" data-len="15">15M</button>
           <button class="btn sm ghost" data-len="30">30M</button>
           <button class="btn sm ghost" data-len="60">60M</button>
         </div>
+        <div class="muted sm">Hold a step button to repeat it. Head start 0 to 30 min, ping 10 sec to 30 min, game up to 6 hours.</div>
 
-        <div class="kv"><span>OUT OF ZONE GRACE</span><b>20 SEC</b></div>
-
-        <div class="kv"><span>HUNTER VISIBLE TO RUNNERS</span><b id="valReveal">ON</b></div>
-        <div class="stepper">
-          <button class="btn sm ghost" data-reveal="1">ON</button>
-          <button class="btn sm ghost" data-reveal="0">OFF</button>
+        <div class="kv"><span>HUNTER OUT-OF-ZONE GRACE</span><b id="valGrace">20 SEC</b></div>
+        <div class="steps">
+          <button class="btn sm ghost" data-step="grace" data-d="-5">&minus;5S</button>
+          <button class="btn sm ghost" data-step="grace" data-d="5">+5S</button>
         </div>
 
         <div class="kv"><span>PLAY ZONE</span><b id="valZone">NONE</b></div>
@@ -296,6 +317,35 @@ body.drawmode .drawBar{bottom:calc(14px + env(safe-area-inset-bottom))}
           <button class="btn sm ghost" id="btnClearZone2">CLEAR ZONE</button>
         </div>
         <div class="muted sm">Optional. Tap corners on the map in order. At least 3 points.</div>
+      </div>
+
+      <div class="blk hidden" id="blkPings">
+        <div class="blkTitle">PING CHANNELS</div>
+        <div class="kv"><span>RUNNERS TO HUNTER</span><b id="runChanTxt">EVERY 1:00</b></div>
+        <div class="muted sm">Hunter sees runner positions only at this interval. Pin holds until the next ping.</div>
+
+        <div class="kv"><span>HUNTER TO RUNNERS</span><b id="huntVisTxt">ON</b></div>
+        <div class="grid2">
+          <button class="btn sm ghost" id="btnRevealOn">ON</button>
+          <button class="btn sm ghost" id="btnRevealOff">OFF</button>
+        </div>
+
+        <div id="huntChanWrap">
+          <div class="kv"><span>HUNTER PING INTERVAL</span><b id="valHuntPing">0:30</b></div>
+          <div class="steps">
+            <button class="btn sm ghost" data-step="huntPing" data-d="-15">&minus;15S</button>
+            <button class="btn sm ghost" data-step="huntPing" data-d="15">+15S</button>
+            <button class="btn sm ghost" data-step="huntPing" data-d="-300">&minus;5M</button>
+            <button class="btn sm ghost" data-step="huntPing" data-d="300">+5M</button>
+          </div>
+          <div class="stepper">
+            <button class="btn sm ghost" data-huntping="30">0:30</button>
+            <button class="btn sm ghost" data-huntping="60">1:00</button>
+            <button class="btn sm ghost" data-huntping="120">2:00</button>
+            <button class="btn sm ghost" data-huntping="0">LIVE</button>
+          </div>
+          <div class="muted sm">Separate from the runner channel. LIVE streams the hunter in real time; otherwise runners get a position snapshot on this interval.</div>
+        </div>
       </div>
 
       <div class="blk" id="blkRoster">
@@ -364,7 +414,15 @@ function uid(){ return rnd(6)+Date.now().toString(36).slice(-4); }
 /* ---------------- constants ---------------- */
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 const APP_PREFIX = 'wgt13-';
-const GRACE_MS = 20000;
+const DEFAULT_GRACE = 20;      // seconds, adjustable 5..180
+const LIMITS = {
+  head:{ min:0,  max:1800, step:15 },
+  ping:{ min:10, max:1800, step:15 },
+  len: { min:0,  max:360,  step:1  },
+  huntPing:{ min:0, max:1800, step:15 },
+  grace:{ min:5, max:180, step:5 }
+};
+function graceMs(){ return (S.settings.grace||DEFAULT_GRACE) * 1000; }
 const TICK = 250;
 const POS_SEND_MS = 3000;
 const MANUAL_PING_COOLDOWN = 20000;
@@ -380,13 +438,13 @@ const S = {
   conns:new Map(),        // clientTag -> DataConnection (host only)
   hostConn:null,          // client only
   clockOffset:0,
-  settings:{ head:120, ping:60, len:0, reveal:1, zone:null },
+  settings:{ head:120, ping:60, len:0, reveal:1, huntPing:30, zone:null, grace:20 },
   players:new Map(),      // tag -> player
   phase:'lobby',
   t0:0, relayAt:0, gameEndAt:0, endReason:'',
   myPos:null, gpsOk:false, gpsErr:false,
   oob:{ active:false, deadline:0, eliminated:false },
-  nextPingAt:Infinity, lastManualPing:0,
+  nextPingAt:Infinity, nextHuntAt:Infinity, lastManualPing:0,
   lastPosSent:0, tagArmed:0,
   drawing:false, drawPts:[], drawLayer:null, centeredOnce:false,
   log:[],
@@ -564,11 +622,12 @@ function checkZone(){
     }
   } else if(!os.active){
     os.active = true;
-    os.deadline = nowMs() + GRACE_MS;
+    os.deadline = nowMs() + graceMs();
     $('oob').classList.add('on');
     $('oob').classList.remove('elim');
     setTxt($('oobTitle'), 'OUT OF ZONE');
-    setTxt($('oobSub'), 'RETURN INSIDE THE PLAY ZONE');
+    setTxt($('oobSub'), 'RETURN INSIDE THE PLAY ZONE - ' + (S.settings.grace||DEFAULT_GRACE) + ' SEC');
+    setTxt($('oobTimer'), mmss(graceMs()));
     updateMeBlock();
   }
 }
@@ -683,7 +742,10 @@ function recomputeTimeline(){
   } else {
     S.relayAt = 0; S.gameEndAt = 0;
   }
-  if(S.phase === 'playing') S.nextPingAt = nextPingAfter(nowMs()+300);
+  if(S.phase === 'playing'){
+    S.nextPingAt = nextPingAfter(nowMs()+300);
+    S.nextHuntAt = nextHuntAfter(nowMs()+300);
+  }
   updateChips();
 }
 
@@ -695,10 +757,27 @@ function hostPushSettings(){
   updateChips();
 }
 
+/* hunter channel: LIVE streams constantly, otherwise a snapshot on the hunter interval */
 function revealHunter(p){
   if(S.phase !== 'playing' || !S.settings.reveal) return;
   if(p.role !== 'hunter' || !p.live) return;
-  hostBroadcast({ t:'hpos', tag:p.tag, lat:p.live.lat, lng:p.live.lng, acc:p.live.acc });
+  p.pub = { lat:p.live.lat, lng:p.live.lng, acc:p.live.acc, at:Date.now() };
+  if((S.settings.huntPing||0) === 0){
+    hostBroadcast({ t:'hpos', tag:p.tag, lat:p.live.lat, lng:p.live.lng, acc:p.live.acc });
+  }
+}
+
+function hostHuntPing(){
+  const step = (S.settings.huntPing||0) * 1000;
+  if(!step || !S.settings.reveal) return;
+  S.players.forEach(function(p){
+    if(p.role === 'hunter' && p.live){
+      p.pub = { lat:p.live.lat, lng:p.live.lng, acc:p.live.acc, at:Date.now() };
+      hostBroadcast({ t:'hpos', tag:p.tag, lat:p.pub.lat, lng:p.pub.lng, acc:p.pub.acc, snap:1 });
+    }
+  });
+  hostBroadcast({ t:'hpingsent', at:Date.now() });
+  hostLog('HUNTER PING SENT');
 }
 
 function hostSelfPos(msg){
@@ -768,7 +847,8 @@ function hostStartGame(){
   S.gameEndAt = S.settings.len ? S.relayAt + S.settings.len * 60000 : 0;
   S.phase = 'playing';
   S.nextPingAt = S.relayAt;
-  hostBroadcast({ t:'start', t0:S.t0, settings:S.settings });
+  S.nextHuntAt = S.relayAt;
+  hostBroadcast({ t:'start', t0:S.t0, settings:S.settings, grace:graceMs() });
   hostLog('GAME STARTED');
   hostBroadcast({ t:'ev', txt:'GAME STARTED' });
   hostPushRoster();
@@ -779,7 +859,7 @@ function hostStartGame(){
 
 function hostAbort(){
   S.phase = 'lobby'; S.t0 = S.relayAt = S.gameEndAt = 0; S.endReason='';
-  S.nextPingAt = Infinity;
+  S.nextPingAt = Infinity; S.nextHuntAt = Infinity;
   Array.from(S.players.values()).forEach(function(p){
     p.alive = true; p.pub = null; p.outside = false;
   });
@@ -869,6 +949,7 @@ function clientHandle(msg){
       S.settings = Object.assign(S.settings, msg.settings||{});
       S.phase = 'playing';
       applyTime(msg);
+      S.nextHuntAt = S.relayAt;
       S.myAlive = true;
       S.players.forEach(function(p){ p.alive = true; p.pub = null; });
       S.oob.active = false; S.oob.eliminated = false;
@@ -897,12 +978,17 @@ function clientHandle(msg){
       });
       refreshMarkers();
       setTimeout(fitAll, 120);
-      log('PING RECEIVED');
-      toast('PING RECEIVED', 'good');
+      log('RUNNER PING - ' + (msg.list||[]).length + ' PIN');
+      toast('RUNNER PING RECEIVED', 'good');
       break;
     case 'hpos': {
       const p = S.players.get(msg.tag);
-      if(p){ p.live = { lat:msg.lat, lng:msg.lng, acc:msg.acc, at:Date.now() }; refreshMarkers(); }
+      if(p){
+        p.live = { lat:msg.lat, lng:msg.lng, acc:msg.acc, at:Date.now() };
+        p.pub = p.live;
+        refreshMarkers();
+      }
+      if(msg.snap) log('HUNTER PING');
       break;
     }
     case 'ev':
@@ -913,7 +999,10 @@ function clientHandle(msg){
       if(!S.t0 && msg.t0){ S.t0 = msg.t0; applyTime(msg); }
       break;
     case 'pinged':
-      log('PING SENT');
+      log('RUNNER PING SENT');
+      break;
+    case 'hpingsent':
+      log('HUNTER PING SENT');
       break;
     case 'pingreq':
       break;
@@ -1184,8 +1273,24 @@ function tick(){
       hostPingFire();
       S.nextPingAt = nextPingAfter(S.nextPingAt + 1);
     }
+    if(t >= S.nextHuntAt){
+      hostHuntPing();
+      S.nextHuntAt = nextHuntAfter(S.nextHuntAt + 1);
+    }
   }
   updateTagButtonSoon();
+}
+
+function nextHuntAfter(ms){
+  const step = (S.settings.huntPing||0) * 1000;
+  if(!step || !S.relayAt) return Infinity;
+  if(S.gameEndAt && S.gameEndAt <= S.relayAt) return Infinity;
+  if(ms <= S.relayAt) return S.relayAt;
+  const k = Math.ceil((ms - S.relayAt) / step);
+  let t = S.relayAt + k*step;
+  if(t < ms) t += step;
+  if(S.gameEndAt && t > S.gameEndAt) return Infinity;
+  return t;
 }
 
 function nextPingAfter(ms){
@@ -1258,15 +1363,21 @@ function updateChips(force){
   if(S.phase === 'playing'){
     const alive = alivePlayers().length;
     chips.push('ALIVE ' + alive + '/' + S.players.size);
-    if(amHunter() && S.settings.reveal){
-      chips.push('HUNTER VISIBLE');
+    if(amHunter()){
+      chips.push('YOU ARE HUNTER');
     }
     if(S.relayAt && nowMs() >= S.relayAt){
       const np = (S.role === 'host') ? S.nextPingAt : nextPingAfter(nowMs());
       if(isFinite(np)){
-        chips.push((np <= S.relayAt + 500 ? 'REVEAL IN ' : 'NEXT PING ') + mmss(np - nowMs()));
-      } else if(S.settings.ping > 0){
-        chips.push('PING ' + mmss(S.settings.ping*1000));
+        chips.push((np <= S.relayAt + 500 ? 'RUNNER PING IN ' : 'RUNNER PING ') + mmss(np - nowMs()));
+      }
+      if(S.settings.reveal){
+        const hp = (S.role === 'host') ? S.nextHuntAt : nextHuntAfter(nowMs());
+        if((S.settings.huntPing||0) === 0){
+          chips.push('HUNTER LIVE');
+        } else if(isFinite(hp)){
+          chips.push('HUNTER PING ' + mmss(hp - nowMs()));
+        }
       }
     }
   }
@@ -1321,7 +1432,11 @@ function refreshMarkers(){
     if(S.phase === 'lobby'){
       if(p.live) pos = { lat:p.live.lat, lng:p.live.lng };
     } else if(p.role === 'hunter'){
-      if(S.settings.reveal && p.live) pos = { lat:p.live.lat, lng:p.live.lng };
+      const liveHunter = (S.settings.huntPing||0) === 0;
+      if(S.settings.reveal){
+        const src = liveHunter ? (p.live || p.pub) : (p.pub || null);
+        if(src) pos = { lat:src.lat, lng:src.lng };
+      }
     } else if(holderHunter && p.pub){
       pos = { lat:p.pub.lat, lng:p.pub.lng };
     }
@@ -1391,18 +1506,47 @@ function renderRoster(){
 
 function esc(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
+function lenText(min){
+  if(!min) return 'NO LIMIT';
+  if(min < 60) return min + ' MIN';
+  const h = Math.floor(min/60), m = min%60;
+  return h + 'H' + (m ? ' ' + m + 'M' : '');
+}
+
 function renderRules(){
   const st = S.settings;
   setTxt($('valHead'), mmss(st.head*1000));
   setTxt($('valPing'), mmss(st.ping*1000));
-  setTxt($('valLen'), st.len ? (st.len + ' MIN') : 'NO LIMIT');
-  setTxt($('valReveal'), st.reveal ? 'ON' : 'OFF');
+  setTxt($('valLen'), lenText(st.len));
+  setTxt($('valHuntPing'), (st.huntPing||0) === 0 ? 'LIVE' : mmss(st.huntPing*1000));
+  setTxt($('valGrace'), (st.grace||DEFAULT_GRACE) + ' SEC');
+  setTxt($('runChanTxt'), 'EVERY ' + mmss(st.ping*1000));
+  setTxt($('huntVisTxt'), st.reveal ? 'ON' : 'OFF');
   setTxt($('valZone'), zoneAreaOk(st.zone) ? (st.zone.length + ' CORNERS') : 'NONE');
   $('valAlive').textContent = alivePlayers().length + ' / ' + S.players.size;
   markSelected('[data-head]', 'head', String(st.head));
   markSelected('[data-ping]', 'ping', String(st.ping));
   markSelected('[data-len]', 'len', String(st.len));
-  markSelected('[data-reveal]', 'reveal', String(st.reveal));
+  markSelected('[data-huntping]', 'huntping', String(st.huntPing||0));
+  $('btnRevealOn').classList.toggle('sel', !!st.reveal);
+  $('btnRevealOff').classList.toggle('sel', !st.reveal);
+  $('huntChanWrap').classList.toggle('hidden', !st.reveal);
+}
+
+/* clamp + apply an adjustable rule value; unit is minutes for 'len', seconds otherwise */
+function adjustSetting(key, delta){
+  const lim = LIMITS[key];
+  if(!lim) return;
+  const st = S.settings;
+  let v = (key === 'len') ? (st.len||0) : (st[key] === undefined ? 0 : st[key]);
+  v = v + delta;
+  if(v < lim.min) v = lim.min;
+  if(v > lim.max) v = lim.max;
+  st[key] = v;
+  hostPushSettings();
+  if(key === 'grace'){
+    log('GRACE ' + v + ' SEC');
+  }
 }
 
 function markSelected(sel, key, val){
@@ -1414,6 +1558,7 @@ function markSelected(sel, key, val){
 function updatePanels(){
   const isHost = S.role === 'host';
   $('blkHostSetup').classList.toggle('hidden', !isHost || S.phase === 'playing' || S.phase === 'ended');
+  $('blkPings').classList.toggle('hidden', !isHost || S.phase === 'ended');
   $('blkHostLive').classList.toggle('hidden', !isHost);
   $('blkClientLive').classList.toggle('hidden', isHost);
   $('btnStart').classList.toggle('hidden', !(isHost && S.phase === 'lobby'));
@@ -1608,6 +1753,7 @@ function wire(){
     b.addEventListener('click', function(){
       S.settings.head = parseInt(b.getAttribute('data-head'),10);
       hostPushSettings();
+      log('HEAD START ' + mmss(S.settings.head*1000));
     });
   });
   document.querySelectorAll('[data-ping]').forEach(function(b){
@@ -1623,12 +1769,52 @@ function wire(){
       hostPushSettings();
     });
   });
-  document.querySelectorAll('[data-reveal]').forEach(function(b){
+  // ping channels: visibility switch + separate hunter interval
+  $('btnRevealOn').addEventListener('click', function(){
+    S.settings.reveal = 1; hostPushSettings(); refreshMarkers();
+    log('HUNTER POSITION SHARED');
+  });
+  $('btnRevealOff').addEventListener('click', function(){
+    S.settings.reveal = 0;
+    markers.forEach(function(m, tag){
+      const p = S.players.get(tag);
+      if(p && p.role === 'hunter'){ map.removeLayer(m); markers.delete(tag); }
+    });
+    hostPushSettings(); refreshMarkers();
+    log('HUNTER POSITION HIDDEN');
+  });
+  document.querySelectorAll('[data-huntping]').forEach(function(b){
     b.addEventListener('click', function(){
-      S.settings.reveal = parseInt(b.getAttribute('data-reveal'),10);
+      S.settings.huntPing = parseInt(b.getAttribute('data-huntping'),10);
       hostPushSettings();
       refreshMarkers();
     });
+  });
+
+  // adjustable rules with press-and-hold repeat
+  document.querySelectorAll('[data-step]').forEach(function(b){
+    const key = b.getAttribute('data-step');
+    const d = parseInt(b.getAttribute('data-d'),10);
+    let holdTimer = null, repeatTimer = null;
+
+    function stop(){
+      clearTimeout(holdTimer); clearInterval(repeatTimer);
+      holdTimer = repeatTimer = null;
+    }
+    function begin(e){
+      if(e.cancelable) e.preventDefault();
+      if(S.role !== 'host') return;
+      adjustSetting(key, d);
+      holdTimer = setTimeout(function(){
+        repeatTimer = setInterval(function(){ adjustSetting(key, d); }, 130);
+      }, 480);
+    }
+    b.addEventListener('pointerdown', begin);
+    ['pointerup','pointerleave','pointercancel','blur'].forEach(function(ev){
+      b.addEventListener(ev, stop);
+    });
+    b.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+    b.addEventListener('click', function(e){ e.preventDefault(); });
   });
 
   document.addEventListener('visibilitychange', function(){
